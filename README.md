@@ -124,12 +124,6 @@ Backend will run at: **http://localhost:8000**
 
 ---
 
-## 📜 License
-
-MIT License – free to use, modify, and distribute.
-
----
-
 ## 🤝 Contributing
 
 Pull requests are welcome! For major changes, please open an issue first to discuss your ideas.
