@@ -1,10 +1,11 @@
+# backend/services/ollama_service.py
 import aiohttp
 import asyncio
 import subprocess
 import json
 import logging
 import time
-from typing import List, AsyncGenerator
+from typing import List, AsyncGenerator, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -77,16 +78,47 @@ class OllamaService:
             logger.error(f"Error getting models: {str(e)}")
             raise
     
-    async def generate_stream(self, prompt: str, model: str) -> AsyncGenerator[str, None]:
-        """Generate streaming response from Ollama"""
+    def _format_messages_for_ollama(self, context_messages: List[Dict[str, Any]], current_prompt: str) -> str:
+        """Format conversation history and current prompt for Ollama"""
+        if not context_messages:
+            return current_prompt
+        
+        # Build conversation context
+        conversation_parts = []
+        
+        # Add system message
+        conversation_parts.append("You are a helpful AI assistant. Use the conversation history below to provide contextually relevant responses.")
+        conversation_parts.append("\nConversation History:")
+        
+        # Add previous messages
+        for msg in context_messages:
+            role = "Human" if msg["role"] == "user" else "Assistant"
+            conversation_parts.append(f"\n{role}: {msg['content']}")
+        
+        # Add current message
+        conversation_parts.append(f"\nHuman: {current_prompt}")
+        conversation_parts.append("\nAssistant:")
+        
+        return "".join(conversation_parts)
+    
+    async def generate_stream(self, prompt: str, model: str, context_messages: Optional[List[Dict[str, Any]]] = None) -> AsyncGenerator[str, None]:
+        """Generate streaming response from Ollama with conversation context"""
         try:
             if not await self.is_server_running():
                 raise Exception("Ollama server is not running")
             
+            # Format prompt with context
+            formatted_prompt = self._format_messages_for_ollama(context_messages or [], prompt)
+            
             payload = {
                 "model": model,
-                "prompt": prompt,
-                "stream": True
+                "prompt": formatted_prompt,
+                "stream": True,
+                "options": {
+                    "temperature": 0.7,
+                    "num_ctx": 4096,  # Context window size
+                    "repeat_penalty": 1.1
+                }
             }
             
             async with aiohttp.ClientSession() as session:
@@ -117,3 +149,53 @@ class OllamaService:
         except Exception as e:
             logger.error(f"Error in generate_stream: {str(e)}")
             raise
+    
+    async def generate_chat(self, messages: List[Dict[str, Any]], model: str) -> AsyncGenerator[str, None]:
+        """Generate response using Ollama's chat API (if available)"""
+        try:
+            if not await self.is_server_running():
+                raise Exception("Ollama server is not running")
+            
+            payload = {
+                "model": model,
+                "messages": messages,
+                "stream": True,
+                "options": {
+                    "temperature": 0.7,
+                    "num_ctx": 4096,
+                    "repeat_penalty": 1.1
+                }
+            }
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/api/chat",
+                    json=payload,
+                    headers={"Content-Type": "application/json"}
+                ) as response:
+                    if response.status != 200:
+                        # Fallback to generate API
+                        logger.warning("Chat API not available, falling back to generate API")
+                        return
+                    
+                    async for line in response.content:
+                        if line:
+                            try:
+                                line_str = line.decode('utf-8').strip()
+                                if line_str:
+                                    data = json.loads(line_str)
+                                    if "message" in data and "content" in data["message"]:
+                                        yield data["message"]["content"]
+                                    if data.get("done", False):
+                                        break
+                            except json.JSONDecodeError:
+                                continue
+                            except Exception as e:
+                                logger.error(f"Error processing chat chunk: {str(e)}")
+                                continue
+                                
+        except Exception as e:
+            logger.error(f"Error in generate_chat: {str(e)}")
+            # Fallback to generate_stream
+            async for chunk in self.generate_stream(messages[-1]["content"], model, messages[:-1]):
+                yield chunk

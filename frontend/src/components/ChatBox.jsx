@@ -1,7 +1,8 @@
+// frontend/src/components/ChatBox.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, User, Bot, Loader2 } from 'lucide-react';
+import { Send, User, Bot, Loader2, MessageSquare } from 'lucide-react';
 
-const ChatBox = ({ messages, isGenerating, onSendMessage, disabled }) => {
+const ChatBox = ({ messages, isGenerating, onSendMessage, disabled, currentSession }) => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -35,10 +36,26 @@ const ChatBox = ({ messages, isGenerating, onSendMessage, disabled }) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 chat-container">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
-            <div className="text-center">
+            <div className="text-center max-w-md">
               <Bot className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-              <p className="text-xl">Start a conversation with your AI assistant</p>
-              <p className="text-sm mt-2">Select a model and type your message below</p>
+              <h3 className="text-xl font-medium mb-2">
+                {currentSession ? 'Continue your conversation' : 'Start a conversation with your AI assistant'}
+              </h3>
+              {currentSession ? (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-400 mb-2">Session: {currentSession.title}</p>
+                  <p className="text-sm text-gray-400">Model: {currentSession.model}</p>
+                </div>
+              ) : (
+                <p className="text-sm mt-2 mb-4">Select a model and type your message below</p>
+              )}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left">
+                <h4 className="font-medium text-blue-900 mb-2">💡 Context-Aware Conversations</h4>
+                <p className="text-sm text-blue-800">
+                  Your messages are now saved with context! The AI will remember your previous messages 
+                  in this session, allowing for more natural, continuous conversations.
+                </p>
+              </div>
             </div>
           </div>
         ) : (
@@ -130,7 +147,9 @@ const ChatBox = ({ messages, isGenerating, onSendMessage, disabled }) => {
               placeholder={
                 disabled
                   ? 'Please start the server and select a model first'
-                  : 'Type your message here... (Press Enter to send, Shift+Enter for new line)'
+                  : currentSession 
+                  ? 'Continue your conversation... (Press Enter to send, Shift+Enter for new line)'
+                  : 'Start a new conversation... (Press Enter to send, Shift+Enter for new line)'
               }
               disabled={disabled || isGenerating}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -150,6 +169,16 @@ const ChatBox = ({ messages, isGenerating, onSendMessage, disabled }) => {
             <span>Send</span>
           </button>
         </form>
+        
+        {/* Context indicator */}
+        {currentSession && messages.length > 0 && (
+          <div className="mt-2 flex items-center justify-center">
+            <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full flex items-center space-x-1">
+              <MessageSquare className="w-3 h-3" />
+              <span>Context-aware conversation • {messages.length} messages</span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

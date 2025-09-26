@@ -1,3 +1,4 @@
+// frontend/src/services/api.js
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:8000/api';
@@ -10,6 +11,7 @@ class ApiService {
     });
   }
 
+  // Model operations
   async getModels() {
     try {
       const response = await this.client.get('/models');
@@ -22,6 +24,7 @@ class ApiService {
     }
   }
 
+  // Server operations
   async getServerStatus() {
     try {
       const response = await this.client.get('/server-status');
@@ -42,20 +45,74 @@ class ApiService {
     }
   }
 
-  /**
-   * Streamed generation
-   * @param {string} prompt
-   * @param {string} model
-   * @param {(chunk: string) => void} onChunk
-   */
-  async generateResponse(prompt, model, onChunk) {
+  // Session operations
+  async createSession(model, title = null) {
+    try {
+      const response = await this.client.post('/sessions', {
+        model,
+        title
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating session:', error);
+      throw new Error('Failed to create session');
+    }
+  }
+
+  async getSessions() {
+    try {
+      const response = await this.client.get('/sessions');
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      throw new Error('Failed to fetch sessions');
+    }
+  }
+
+  async getSession(sessionId) {
+    try {
+      const response = await this.client.get(`/sessions/${sessionId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching session:', error);
+      throw new Error('Failed to fetch session');
+    }
+  }
+
+  async getSessionMessages(sessionId) {
+    try {
+      const response = await this.client.get(`/sessions/${sessionId}/messages`);
+      return response.data || [];
+    } catch (error) {
+      console.error('Error fetching session messages:', error);
+      throw new Error('Failed to fetch session messages');
+    }
+  }
+
+  async deleteSession(sessionId) {
+    try {
+      const response = await this.client.delete(`/sessions/${sessionId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      throw new Error('Failed to delete session');
+    }
+  }
+
+  // Message generation with context
+  async generateResponse(prompt, model, sessionId = null, onChunk, maxContextMessages = 10) {
     try {
       const response = await fetch(`${BASE_URL}/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt, model }),
+        body: JSON.stringify({ 
+          prompt, 
+          model, 
+          session_id: sessionId,
+          max_context_messages: maxContextMessages 
+        }),
       });
 
       if (!response.ok) {

@@ -1,6 +1,8 @@
+# backend/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.chat import router as chat_router
+from database.database import create_tables
 import logging
 
 # Configure logging
@@ -18,12 +20,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Initialize database tables
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup"""
+    logger.info("Creating database tables...")
+    create_tables()
+    logger.info("Database tables created successfully")
+
 # Include routes
 app.include_router(chat_router, prefix="/api")
 
 @app.get("/")
 async def root():
     return {"message": "Ollama Chatbot API is running!"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "message": "API is running"}
 
 if __name__ == "__main__":
     import uvicorn
