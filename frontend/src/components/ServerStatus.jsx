@@ -1,3 +1,4 @@
+// frontend/src/components/ServerStatus.jsx
 import React, { useState } from 'react';
 import { Server, Play, Loader2 } from 'lucide-react';
 
@@ -17,8 +18,8 @@ const ServerStatus = ({ isRunning, onStartServer }) => {
     <div className="flex items-center space-x-2">
       <div className="flex items-center space-x-2">
         <div className={`w-2 h-2 rounded-full ${isRunning ? 'bg-green-500' : 'bg-red-500'}`} />
-        <Server className="w-4 h-4 text-gray-600" />
-        <span className="text-sm font-medium text-gray-700">
+        <Server className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
           Server: {isRunning ? 'Running' : 'Stopped'}
         </span>
       </div>

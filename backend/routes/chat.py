@@ -1,27 +1,36 @@
 # backend/routes/chat.py
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from services.ollama_service import OllamaService
 from services.chat_service import ChatService
+from services.web_search_service import WebSearchService
 from database.database import get_db
 from database.models import ChatSession as ChatSessionModel, ChatMessage as ChatMessageModel
 import json
 import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime
+import base64
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 ollama_service = OllamaService()
 chat_service = ChatService()
+web_search_service = WebSearchService()
 
 class GenerateRequest(BaseModel):
     prompt: str
     model: str
     session_id: Optional[str] = None
     max_context_messages: int = Field(default=10, ge=1, le=50)
+    images: Optional[List[str]] = None  # Base64 encoded images
+    web_search: bool = False
+
+class WebSearchRequest(BaseModel):
+    query: str
+    max_results: int = Field(default=5, ge=1, le=10)
 
 class SessionCreateRequest(BaseModel):
     model: str
@@ -50,6 +59,27 @@ async def get_models():
     except Exception as e:
         logger.error(f"Error fetching models: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch models: {str(e)}")
+
+@router.post("/web-search")
+async def web_search(request: WebSearchRequest):
+    """Perform web search"""
+    try:
+        results = await web_search_service.search(request.query, request.max_results)
+        return {"results": results}
+    except Exception as e:
+        logger.error(f"Error performing web search: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Web search failed: {str(e)}")
+
+@router.post("/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    """Upload and encode image"""
+    try:
+        contents = await file.read()
+        encoded = base64.b64encode(contents).decode('utf-8')
+        return {"encoded": encoded, "filename": file.filename}
+    except Exception as e:
+        logger.error(f"Error uploading image: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
 
 @router.post("/sessions", response_model=SessionResponse)
 async def create_session(request: SessionCreateRequest, db: Session = Depends(get_db)):
@@ -153,20 +183,28 @@ async def delete_session(session_id: str, db: Session = Depends(get_db)):
 
 @router.post("/generate")
 async def generate_response(request: GenerateRequest, db: Session = Depends(get_db)):
-    """Generate response from Ollama model with streaming and context"""
+    """Generate response from Ollama model with streaming, context, images, and web search"""
     try:
         if not await ollama_service.is_server_running():
             raise HTTPException(status_code=503, detail="Ollama server is not running")
         
+        # Prepare enhanced prompt with web search if requested
+        enhanced_prompt = request.prompt
+        if request.web_search:
+            search_results = await web_search_service.search(request.prompt, 3)
+            if search_results:
+                context = "\n\n[Web Search Results]:\n"
+                for i, result in enumerate(search_results, 1):
+                    context += f"{i}. {result['title']}\n{result['snippet']}\n{result['url']}\n\n"
+                enhanced_prompt = f"{context}\nUser Query: {request.prompt}"
+        
         # If session_id is provided, get context and save messages
         context_messages = []
         if request.session_id:
-            # Verify session exists
             session = chat_service.get_session(db, request.session_id)
             if not session:
                 raise HTTPException(status_code=404, detail="Session not found")
             
-            # Get conversation context
             context_messages = chat_service.get_context_messages(
                 db, request.session_id, request.max_context_messages
             )
@@ -179,13 +217,13 @@ async def generate_response(request: GenerateRequest, db: Session = Depends(get_
             collected_response = ""
             try:
                 async for chunk in ollama_service.generate_stream(
-                    request.prompt, 
+                    enhanced_prompt, 
                     request.model, 
-                    context_messages
+                    context_messages,
+                    request.images
                 ):
                     if chunk:
                         collected_response += chunk
-                        # Format as SSE (Server-Sent Events)
                         yield f"data: {json.dumps({'content': chunk})}\n\n"
                 
                 # Save AI response to database if session exists

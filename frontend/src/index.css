@@ -22,6 +22,10 @@ body {
   background-color: #f9fafb;
 }
 
+.dark body {
+  background-color: #111827;
+}
+
 #root {
   height: 100%;
   min-height: 100vh;
@@ -37,19 +41,35 @@ body {
   border-radius: 3px;
 }
 
+.dark .chat-container::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
 .chat-container::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 3px;
+}
+
+.dark .chat-container::-webkit-scrollbar-thumb {
+  background: #4b5563;
 }
 
 .chat-container::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
 
+.dark .chat-container::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
 /* Firefox scrollbar styles */
 .chat-container {
   scrollbar-width: thin;
   scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+.dark .chat-container {
+  scrollbar-color: #4b5563 #1f2937;
 }
 
 /* Message animation styles */
@@ -178,11 +198,11 @@ select:focus {
 
 /* Message content styling */
 .message-content {
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .message-content p {
-  margin: 0 0 0.5em 0;
+  margin: 0 0 0.75em 0;
 }
 
 .message-content p:last-child {
@@ -191,23 +211,71 @@ select:focus {
 
 .message-content code {
   background-color: rgba(0, 0, 0, 0.1);
-  padding: 0.125rem 0.25rem;
+  padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.875em;
 }
 
+.dark .message-content code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 .message-content pre {
-  background-color: rgba(0, 0, 0, 0.05);
-  padding: 0.75rem;
+  background-color: #1e293b;
+  padding: 1rem;
   border-radius: 0.5rem;
   overflow-x: auto;
-  margin: 0.5rem 0;
+  margin: 0.75rem 0;
+}
+
+.dark .message-content pre {
+  background-color: #0f172a;
 }
 
 .message-content pre code {
   background: none;
   padding: 0;
+  color: #e2e8f0;
+}
+
+/* Table styling */
+.message-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.message-content th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+.dark .message-content th {
+  background-color: #1f2937;
+}
+
+.message-content th,
+.message-content td {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.dark .message-content th,
+.dark .message-content td {
+  border-color: #374151;
+}
+
+.message-content tr:hover {
+  background-color: #f9fafb;
+}
+
+.dark .message-content tr:hover {
+  background-color: #1f2937;
 }
 
 /* Responsive adjustments */
@@ -218,6 +286,10 @@ select:focus {
   
   .message-content {
     font-size: 0.875rem;
+  }
+
+  .message-content table {
+    font-size: 0.8125rem;
   }
 }
 
@@ -232,4 +304,30 @@ select:focus {
     max-height: none !important;
     overflow: visible !important;
   }
+}
+
+/* Dark mode transitions */
+* {
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+
+/* Image preview styles */
+.image-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview img {
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+/* Copy button styles */
+.copy-button {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+pre:hover .copy-button {
+  opacity: 1;
 }

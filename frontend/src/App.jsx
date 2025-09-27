@@ -6,17 +6,21 @@ import ServerStatus from './components/ServerStatus';
 import SessionSidebar from './components/SessionSidebar';
 import { useChat } from './hooks/useChat';
 import { apiService } from './services/api';
+import { useTheme } from './context/ThemeContext';
+import { Moon, Sun } from 'lucide-react';
 
 function App() {
   const [models, setModels] = useState([]);
   const [serverRunning, setServerRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
   
   const {
     messages,
     isGenerating,
     sendMessage,
+    stopGeneration,
     sessions,
     currentSession,
     createNewSession,
@@ -29,7 +33,6 @@ function App() {
     clearCurrentChat
   } = useChat();
 
-  // Check server status and load models on component mount
   useEffect(() => {
     checkServerStatus();
     loadModels();
@@ -62,7 +65,6 @@ function App() {
   const handleStartServer = async () => {
     try {
       await apiService.startServer();
-      // Wait a moment then check status and reload models
       setTimeout(() => {
         checkServerStatus();
         loadModels();
@@ -74,18 +76,14 @@ function App() {
 
   const handleModelSelect = (model) => {
     setSelectedModel(model);
-    // If we're starting a new chat and no current session, create one
-    if (!currentSession && messages.length === 0) {
-      // Will be created automatically when first message is sent
-    }
   };
 
-  const handleSendMessage = (message) => {
+  const handleSendMessage = (message, images = [], webSearch = false) => {
     if (!selectedModel) {
       alert('Please select a model first');
       return;
     }
-    sendMessage(message);
+    sendMessage(message, images, webSearch);
   };
 
   const handleSessionSelect = async (sessionId) => {
@@ -121,14 +119,14 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Sidebar */}
       <SessionSidebar
         sessions={sessions}
@@ -144,11 +142,11 @@ function App() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
           <div className="px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   Ollama Chatbot
                 </h1>
                 <ServerStatus 
@@ -156,10 +154,10 @@ function App() {
                   onStartServer={handleStartServer}
                 />
                 {currentSession && (
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                     <span>•</span>
                     <span className="font-medium">{currentSession.title}</span>
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
                       {currentSession.model}
                     </span>
                   </div>
@@ -175,9 +173,16 @@ function App() {
                 />
                 <button
                   onClick={handleClearChat}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   Clear Chat
+                </button>
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -186,11 +191,12 @@ function App() {
 
         {/* Main Chat Interface */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          <div className="bg-white rounded-lg shadow-sm h-full">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm h-full">
             <ChatBox
               messages={messages}
               isGenerating={isGenerating}
               onSendMessage={handleSendMessage}
+              onStopGeneration={stopGeneration}
               disabled={!serverRunning || !selectedModel}
               currentSession={currentSession}
             />

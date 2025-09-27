@@ -1,13 +1,22 @@
-// @type {import('tailwindcss').Config}
-module.exports = {
+// frontend/tailwind.config.js
+// /** @type {import('tailwindcss').Config} */
+export default {
   content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "./public/index.html"
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
+      colors: {
+        dark: {
+          bg: '#111827',
+          surface: '#1f2937',
+          border: '#374151',
+        }
+      },
       animation: {
-        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'spin-slow': 'spin 3s linear infinite',
       }
     },
   },
