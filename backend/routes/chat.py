@@ -56,7 +56,7 @@ async def get_models():
     logger.info("get_models endpoint called")
     try:
         models = await ollama_service.get_models()
-        logger.info(f"get_models output - Retrieved {len(models)} models: {[m.get('name', 'unknown') for m in models]}")
+        # logger.info(f"get_models output - Retrieved {len(models)} models: {[m.get('name', 'unknown') for m in models]}")
         return {"models": models}
     except Exception as e:
         logger.error(f"get_models error - Failed to fetch models: {str(e)}", exc_info=True)
