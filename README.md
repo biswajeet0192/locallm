@@ -1,4 +1,4 @@
-# 🧠 Local LLM Chatbot with Ollama, FastAPI & React
+# Local LLM Chatbot with Ollama, FastAPI & React
 
 A full-stack chatbot application that runs a **local LLM (Llama 3.x or any Ollama model)** with a **FastAPI backend** and a **React frontend**.  
 
@@ -11,7 +11,7 @@ It allows you to:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ollama-chatbot/
@@ -44,7 +44,7 @@ ollama-chatbot/
 
 ---
 
-## 🚀 Features
+## Features
 
 - ✅ Local LLM inference using [Ollama](https://ollama.com)  
 - ✅ FastAPI backend to handle chat and model queries  
@@ -55,7 +55,7 @@ ollama-chatbot/
 
 ---
 
-## 🛠️ Requirements
+## Requirements
 
 - [Python 3.9+](https://www.python.org/downloads/)  
 - [Node.js 18+](https://nodejs.org/)  
@@ -63,7 +63,7 @@ ollama-chatbot/
 
 ---
 
-## ⚙️ Backend Setup (FastAPI)
+## Backend Setup (FastAPI)
 
 ```bash
 cd backend
@@ -77,7 +77,7 @@ Backend will run at: **http://localhost:8000**
 
 ---
 
-## 🧠 Using the App
+## Using the App
 
 1. Ensure **Ollama** is installed and at least one model is downloaded:
 
@@ -99,9 +99,9 @@ Backend will run at: **http://localhost:8000**
 
 4. Open **http://localhost:3000** in your browser.
 
-   - 🔘 Click **“Start Ollama”** if the server isn’t running  
-   - 📜 Click **“Get Models”** to list installed models  
-   - 🤖 Select a model and start chatting  
+   - Click **“Start Ollama”** if the server isn’t running  
+   - Click **“Get Models”** to list installed models  
+   - Select a model and start chatting  
 
 ---
 
@@ -116,7 +116,7 @@ Backend will run at: **http://localhost:8000**
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend:** React, TailwindCSS, Lucide Icons  
 - **Backend:** FastAPI, Python  
@@ -124,6 +124,6 @@ Backend will run at: **http://localhost:8000**
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Pull requests are welcome! For major changes, please open an issue first to discuss your ideas.
